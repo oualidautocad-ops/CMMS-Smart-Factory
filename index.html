@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>GMAO Simplifiée • Parc Anycubic</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <meta name="description" content="Interface de gestion de maintenance assistée par ordinateur (GMAO) pour le parc d'équipements Anycubic (Photon, Wash, Cure)." />
+
+  <style>
+    :root {
+      /* Couleurs de base */
+      --bg-page: #f5f7fb;
+      --bg-surface: #ffffff;
+      --bg-soft: #f1f5f9;
+
+      /* Couleurs métier (plus sobres) */
+      --accent: #059669;          /* Maintenance (Vert - Succès/Action) */
+      --accent-soft: rgba(5,150,105,0.10);
+      --accent-border: rgba(5,150,105,0.42);
+
+      --blue-kpi: #1d4ed8;        /* KPI / Pilotage (Bleu - Information) */
+      --blue-kpi-soft: rgba(29,78,216,0.10);
+      --blue-kpi-border: rgba(29,78,216,0.40);
+
+      --orange-alert: #ea580c;    /* Alerte / Retard (Orange - Avertissement) */
+      --orange-soft: rgba(234,88,12,0.12);
+      --orange-border: rgba(234,88,12,0.45);
+
+      --red-critic: #b91c1c;      /* Critique (Rouge - Danger) */
+      --red-soft: rgba(185,28,28,0.10);
+      --red-border: rgba(185,28,28,0.42);
+
+      /* Général */
+      --border-subtle: #e2e8f0;
+      --border-strong: #cbd5e1;
+
+      --text-main: #0f172a;
+      --text-soft: #334155;
+      --text-muted: #64748b; /* Légèrement plus foncé pour meilleure lisibilité */
+
+      --shadow-strong: 0 12px 25px rgba(15,23,42,0.08); /* Ombre plus subtile */
+      --shadow-modal: 0 24px 70px rgba(15,23,42,0.25);
+
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      --radius-pill: 999px;
+
+      --transition-fast: 160ms ease-out;
+    }
+
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body {
+      font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
+      background: var(--bg-page); /* Simplification du fond */
+      color: var(--text-main);
+      min-height: 100vh;
+      display:flex;
+      flex-direction:column;
+      line-height: 1.5;
+    }
+    a { color:inherit; text-decoration:none; }
+    button { font:inherit; cursor:pointer; border:none; }
+
+    /* Top bar */
+    .top-bar {
+      width:100%;
+      border-bottom:1px solid var(--border-subtle);
+      background:rgba(255,255,255,0.96);
+      backdrop-filter:blur(8px);
+      position: sticky; /* Fixe la barre en haut */
+      top: 0;
+      z-index: 100;
+    }
+    .top-bar-inner {
+      max-width:1200px;
+      margin:0 auto;
+      padding:0.4rem 1rem;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:0.5rem;
+      font-size:0.75rem; /* Légèrement plus grand */
+      color:var(--text-muted);
+    }
+    .top-bar-left {
+      display:flex;
+      align-items:center;
+      gap:0.75rem; /* Espacement accru */
+      flex-wrap:wrap;
+    }
+    .top-tag {
+      padding:0.18rem 0.7rem;
+      border-radius:var(--radius-pill);
+      border:1px solid var(--border-subtle);
+      background:var(--bg-soft); /* Utilisation de la variable soft */
+      text-transform:uppercase;
+      letter-spacing:0.1em;
+      font-weight:700;
+      white-space:nowrap;
+      font-size: 0.7rem;
+    }
+    .top-bar-right {
+      display:flex;
+      gap:0.6rem;
+      flex-wrap:wrap;
+      align-items:center;
+      white-space:nowrap;
+    }
+
+    /* Layout principal */
+    .app-shell {
+      max-width:1200px;
+      margin:0 auto;
+      padding:1.2rem 1rem 2.4rem; /* Augmentation du padding vertical */
+      display:flex;
+      flex-direction:column;
+      gap:1.2rem; /* Espacement accru */
+      width: 100%;
+    }
+
+    header {
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      gap:1rem;
+    }
+
+    .brand {
+      display:flex;
+      align-items:center;
+      gap:0.75rem;
+      flex-wrap:wrap;
+    }
+
+    .brand-logo-block { display:flex; align-items:center; gap:0.6rem; }
+
+    .brand-logo {
+      width:44px; /* Légèrement plus grand */
+      height:44px;
+      border-radius:14px;
+      background:conic-gradient(from 220deg,var(--accent),#22c55e,#14b8a6,#0ea5e9,var(--accent));
+      padding:2px;
+      box-shadow:0 12px 30px rgba(15,23,42,0.12);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex:0 0 auto;
+    }
+    .brand-logo-inner {
+      width:100%;height:100%;
+      border-radius:12px;
+      background:var(--bg-surface);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      overflow:hidden;
+    }
+    .brand-logo-inner::before {
+      content:"";
+      position:absolute;
+      width:120%;height:120%;
+      background:
+        radial-gradient(circle at 30% 15%,rgba(5,150,105,0.20),transparent 55%),
+        radial-gradient(circle at 80% 80%,rgba(37,99,235,0.20),transparent 55%);
+      opacity:0.9;
+    }
+    .brand-logo-icon {
+      position:relative;
+      width:22px;height:22px;
+      border-radius:6px;
+      border:1.5px solid rgba(15,23,42,0.08);
+      background:linear-gradient(145deg,#22c55e,#0ea5e9);
+      box-shadow:0 6px 18px rgba(37,99,235,0.25);
+    }
+    .brand-text { display:flex; flex-direction:column; gap:0.1rem; min-width: 0; }
+    .brand-title {
+      font-weight:800; /* Plus de poids */
+      font-size:1.15rem; /* Légèrement plus grand */
+      letter-spacing:0.01em;
+      color:var(--text-main);
+      display:flex;
+      align-items:center;
+      gap:0.5rem;
+      flex-wrap:wrap;
+      min-width:0;
+    }
+    .brand-sub {
+      font-size:0.75rem; /* Légèrement plus grand */
+      color:var(--text-muted);
+      text-transform:uppercase;
+      letter-spacing:0.14em; /* Légèrement réduit */
+      font-weight:650;
+    }
+
+    /* Navigation */
+    nav {
+      display:flex;
+      flex-wrap:nowrap;
+      gap:0.3rem;
+      background:var(--bg-surface);
+      border-radius:var(--radius-pill);
+      padding:0.2rem;
+      border:1px solid var(--border-subtle);
+      box-shadow:0 8px 20px rgba(148,163,184,0.12); /* Ombre plus légère */
+      overflow-x:auto; /* Utilisation de overflow-x pour la clarté */
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    nav::-webkit-scrollbar{ height: 4px; }
+    nav::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 4px; }
+
+    .nav-btn {
+      border-radius:var(--radius-pill);
+      border:1px solid transparent;
+      padding:0.5rem 1rem; /* Padding accru */
+      font-size:0.8rem; /* Légèrement plus grand */
+      letter-spacing:0.05em;
+      text-transform:uppercase;
+      color:var(--text-soft);
+      background:transparent;
+      display:flex;
+      align-items:center;
+      gap:0.4rem;
+      transition:background var(--transition-fast),color var(--transition-fast),
+                 transform var(--transition-fast),box-shadow var(--transition-fast),
+                 border-color var(--transition-fast);
+      font-weight:700;
+      white-space:nowrap;
+      flex:0 0 auto;
+    }
+    .nav-btn span.dot {
+      width:6px;height:6px;border-radius:999px;
+      background:#cbd5f5;
+    }
+    .nav-btn.active {
+      background:var(--accent-soft);
+      color:#065f46; /* Texte plus contrasté */
+      border-color:var(--accent-border);
+      box-shadow:0 6px 15px rgba(5,150,105,0.15);
+    }
+    .nav-btn.active span.dot { background:var(--accent); }
+    .nav-btn:hover:not(.active){
+      background:rgba(148,163,184,0.08); /* Moins de transparence */
+      color:var(--text-main);
+      transform:translateY(-1px);
+    }
+
+    /* Carte principale */
+    .content-card {
+      background:var(--bg-surface);
+      border-radius:var(--radius-xl);
+      padding:1.2rem 1.2rem 1.8rem; /* Padding accru */
+      border:1px solid var(--border-subtle);
+      box-shadow:var(--shadow-strong);
+      position:relative;
+      overflow:hidden;
+    }
+    .content-card::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(circle at 10% 0%,rgba(59,130,246,0.04),transparent 55%),
+        radial-gradient(circle at 100% 110%,rgba(5,150,105,0.06),transparent 55%);
+      pointer-events:none;
+      opacity:0.95;
+    }
+    .content-inner{
+      position:relative;
+      z-index:1;
+      display:flex;
+      flex-direction:column;
+      gap:1.5rem; /* Espacement accru */
+    }
+
+    /* CADRES PRO par section */
+    .section-frame{
+      border:1px solid var(--border-subtle);
+      border-radius:14px; /* Légèrement réduit */
+      padding:1rem 1rem 1.2rem;
+      background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,1)); /* Fond plus clair */
+      box-shadow:0 10px 25px rgba(148,163,184,0.1); /* Ombre plus légère */
+      position:relative;
+      overflow:hidden;
+    }
+    .section-frame::before{
+      content:"";
+      position:absolute;
+      left:0;top:0;bottom:0;
+      width:4px; /* Barre latérale plus fine */
+      background:var(--accent);
+    }
+    .section-frame.kpi::before{ background:var(--blue-kpi); }
+    .section-frame.alert::before{ background:var(--orange-alert); }
+    .section-frame.critic::before{ background:var(--red-critic); }
+
+    .section-header{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      gap:0.75rem;
+      align-items:flex-end;
+      margin-bottom:0.75rem;
+    }
+    .section-pill{
+      font-size:0.75rem;
+      text-transform:uppercase;
+      letter-spacing:0.12em;
+      color:var(--text-muted);
+      font-weight:700;
+    }
+    .section-title{
+      font-size:1.15rem;
+      font-weight:850;
+      display:flex;
+      align-items:center;
+      gap:0.5rem;
+      color:var(--text-main);
+      margin-top:0.1rem;
+    }
+    .section-badge{
+      font-size:0.75rem;
+      border-radius:var(--radius-pill);
+      padding:0.15rem 0.7rem;
+      border:1px solid var(--border-subtle);
+      color:var(--text-soft);
+      background:var(--bg-soft);
+      font-weight:700;
+      white-space:nowrap;
+    }
+
+    .grid{display:grid;gap:1rem;}
+    .grid-2{grid-template-columns:1fr;} /* Par défaut 1 colonne */
+    @media(min-width:900px){ .grid-2{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);} }
+
+    .card{
+      background:var(--bg-surface);
+      border-radius:var(--radius-lg);
+      border:1px solid var(--border-subtle);
+      padding:1rem; /* Padding accru */
+      box-shadow:0 8px 20px rgba(148,163,184,0.08);
+    }
+    .card-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:0.75rem;
+      margin-bottom:0.75rem;
+    }
+    .card-title{
+      font-size:0.95rem;
+      font-weight:750;
+      color:var(--text-main);
+      display:flex;
+      align-items:center;
+      gap:0.4rem;
+    }
+    .card-title::before{
+      content:"";
+      width:7px;height:7px;border-radius:999px;
+      background:var(--accent);
+      box-shadow:0 0 0 3px rgba(5,150,105,0.16);
+    }
+    .card-sub{font-size:0.8rem;color:var(--text-muted);font-weight:600;}
+
+    /* Boutons pro */
+    .btn{
+      border-radius:var(--radius-pill);
+      border:1px solid var(--border-subtle);
+      background:var(--bg-surface);
+      padding:0.5rem 1rem;
+      font-size:0.8rem;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      gap:0.4rem;
+      transition:transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+      white-space:nowrap;
+      color:var(--text-soft);
+    }
+    .btn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 4px 8px rgba(15,23,42,0.05);
+    }
+    .btn-primary{
+      background:var(--accent);
+      color:#ffffff;
+      border-color:var(--accent);
+      box-shadow:0 6px 12px rgba(5,150,105,0.2);
+    }
+    .btn-primary:hover{
+      background:#047857;
+      border-color:#047857;
+      box-shadow:0 8px 16px rgba(5,150,105,0.3);
+    }
+    .btn-ghost{
+      background:transparent;
+      border-color:transparent;
+      color:var(--text-soft);
+    }
+    .btn-ghost:hover{
+      background:var(--bg-soft);
+      transform:translateY(-1px);
+      box-shadow:none;
+    }
+    .btn-icon-only{
+      width:36px;height:36px;padding:0;
+      justify-content:center;
+      flex-shrink:0;
+    }
+
+    /* Formulaires */
+    .filters-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:0.75rem;
+      margin-bottom:1rem;
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:0.3rem;
+      min-width:160px; /* Augmentation de la largeur minimale */
+      flex-grow:1;
+    }
+    label{
+      font-size:0.75rem;
+      color:var(--text-muted);
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:0.08em;
+    }
+    select, input[type="text"]{
+      padding:0.5rem 0.75rem;
+      border:1px solid var(--border-strong);
+      border-radius:var(--radius-lg);
+      font-size:0.9rem;
+      color:var(--text-main);
+      background:var(--bg-surface);
+      transition:border-color var(--transition-fast), box-shadow var(--transition-fast);
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+    select:focus, input[type="text"]:focus{
+      outline:none;
+      border-color:var(--accent);
+      box-shadow:0 0 0 3px var(--accent-soft);
+    }
+
+    /* Composants */
+    .chip{
+      font-size:0.7rem;
+      font-weight:700;
+      padding:0.15rem 0.6rem;
+      border-radius:var(--radius-pill);
+      background:var(--blue-kpi-soft);
+      color:var(--blue-kpi);
+      border:1px solid var(--blue-kpi-border);
+      white-space:nowrap;
+    }
+    .chip.accent{
+      background:var(--accent-soft);
+      color:var(--accent);
+      border-color:var(--accent-border);
+    }
+
+    /* Tableaux */
+    .table-wrapper{
+      max-height:400px;
+      overflow-y:auto;
+      border:1px solid var(--border-subtle);
+      border-radius:var(--radius-lg);
+      background:var(--bg-surface);
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:0.85rem;
+    }
+    thead{
+      position:sticky;
+      top:0;
+      background:var(--bg-soft);
+      z-index:10;
+    }
+    th, td{
+      padding:0.75rem 1rem;
+      text-align:left;
+      border-bottom:1px solid var(--border-subtle);
+    }
+    th{
+      font-weight:750;
+      color:var(--text-soft);
+      text-transform:uppercase;
+      letter-spacing:0.05em;
+      font-size:0.75rem;
+    }
+    tbody tr:last-child td{ border-bottom:none; }
+    tbody tr:nth-child(even){ background:var(--bg-soft); }
+    .level-n1{ color:var(--accent); font-weight:600; }
+    .level-n2{ color:var(--blue-kpi); font-weight:600; }
+
+    /* Modale */
+    .modal-backdrop{
+      position:fixed;inset:0;
+      background:rgba(15,23,42,0.4);
+      display:none;
+      justify-content:center;align-items:center;
+      z-index:1000;
+      padding:1rem;
+      transition:opacity var(--transition-fast);
+      opacity:0;
+    }
+    .modal-backdrop.active{display:flex;opacity:1;}
+    .modal-panel{
+      background:var(--bg-surface);border-radius:var(--radius-xl);
+      padding:1.2rem; /* Padding accru */
+      border:1px solid var(--border-subtle);
+      box-shadow:var(--shadow-modal);
+      max-width:480px; /* Plus large */
+      width:100%;
+      position:relative;color:var(--text-main);
+      transform:translateY(20px);
+      transition:transform var(--transition-fast);
+    }
+    .modal-backdrop.active .modal-panel{ transform:translateY(0); }
+    .modal-title{
+      font-size:1.1rem;font-weight:850;margin-bottom:0.5rem;
+      display:flex;align-items:center;gap:0.5rem;
+    }
+    .modal-title::before{content:"✅";font-size:1rem;}
+    .modal-sub{font-size:0.85rem;color:var(--text-soft);margin-bottom:1rem;font-weight:600;}
+    .modal-actions{display:flex;flex-direction:column;gap:0.6rem;margin-bottom:1rem;}
+    .modal-footer{
+      display:flex;justify-content:space-between;align-items:center;
+      gap:0.5rem;font-size:0.75rem;color:var(--text-muted);
+      font-weight:600;
+      flex-wrap: wrap;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .kbd{
+      border-radius:4px;border:1px solid var(--border-strong);
+      padding:0.05rem 0.35rem;font-family:ui-monospace,Menlo,Consolas,monospace;
+      font-size:0.7rem;background:var(--bg-soft);color:var(--text-soft);
+      font-weight:800;
+    }
+
+    .app-section{display:none;}
+    .app-section.active{display:block;}
+
+    /* Footer */
+    .site-footer{
+      margin-top:auto;
+      border-top:1px solid var(--border-subtle);
+      background:var(--bg-surface);
+    }
+    .site-footer-inner{
+      max-width:1200px;margin:0 auto;
+      padding:0.8rem 1rem 1rem;
+      display:flex;flex-wrap:wrap;
+      justify-content:space-between;gap:0.75rem;
+      font-size:0.75rem;
+      color:var(--text-muted);
+      font-weight:600;
+    }
+    .footer-left{display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;}
+    .footer-dot{width:6px;height:6px;border-radius:999px;background:var(--accent);}
+
+    /* ====== MOBILE OPTIMIZATION (max-width: 768px) ====== */
+    @media (max-width: 768px) {
+      .card-header { flex-wrap: wrap; }
+      .modal-actions { flex-wrap: wrap; }
+      .top-bar-inner { padding: 0.4rem 0.7rem; }
+      .app-shell { padding: 0.8rem 0.7rem 1.5rem; gap: 1rem; }
+      .content-card { padding: 1rem 0.8rem 1.2rem; }
+      .section-frame { padding: 0.8rem 0.8rem 1rem; }
+
+      header { flex-direction: column; align-items: flex-start; gap: 0.8rem; }
+      .brand-title { font-size: 1.1rem; }
+      .brand-sub { font-size: 0.7rem; }
+
+      /* Navigation: S'assure que la barre de navigation est toujours visible */
+      nav {
+        width: 100%;
+        padding: 0.15rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(148,163,184,0.1);
+      }
+      .nav-btn {
+        padding: 0.4rem 0.7rem;
+        font-size: 0.75rem;
+        letter-spacing: 0.03em;
+      }
+
+      /* Filtres: Utilisation de 100% de la largeur pour chaque champ */
+      .filters-row { flex-direction: column; gap: 0.6rem; }
+      .field { min-width: 100%; }
+      select, input[type="text"] { width: 100%; }
+
+      /* Table -> cartes sur mobile (Amélioration de la lisibilité) */
+      .table-wrapper { max-height: none; overflow: visible; border: none; background: transparent; }
+      table { width: 100%; }
+      thead { display: none; }
+      tbody, tr, td { display: block; width: 100%; }
+      tbody tr {
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-lg);
+        margin: 0.75rem 0; /* Espacement accru entre les cartes */
+        padding: 0.5rem 0.5rem;
+        background: var(--bg-surface);
+        box-shadow: 0 6px 15px rgba(148,163,184,0.1);
+      }
+      tbody tr:nth-child(even){ background:var(--bg-surface); } /* Uniformisation du fond */
+      td {
+        border: none;
+        padding: 0.4rem 0.5rem;
+        display: flex;
+        align-items: center; /* Alignement centré pour le label/valeur */
+        justify-content: space-between;
+        gap: 0.5rem;
+      }
+      td::before {
+        content: attr(data-label);
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-muted);
+        font-weight: 700;
+        flex: 0 0 40%; /* Donne plus de place au label */
+        max-width: 40%;
+      }
+      td:last-child { border-bottom: none; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="top-bar">
+    <div class="top-bar-inner">
+      <div class="top-bar-left">
+        <span class="top-tag">GMAO • Atelier Impression 3D</span>
+        <span>Parc Anycubic : Photon • Wash • Cure</span>
+      </div>
+      <div class="top-bar-right">
+        <span>Responsables : Oualid & Paul</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    <header>
+      <div class="brand">
+        <div class="brand-logo-block">
+          <div class="brand-logo" aria-hidden="true">
+            <div class="brand-logo-inner">
+              <div class="brand-logo-icon"></div>
+            </div>
+          </div>
+
+          <div class="brand-text">
+            <div class="brand-title">GMAO Simplifiée – Parc Anycubic</div>
+            <div class="brand-sub">Maintenance Préventive & Suivi d'Exploitation</div>
+          </div>
+        </div>
+      </div>
+
+      <nav aria-label="Navigation principale">
+        <button class="nav-btn active" data-section="home"><span class="dot"></span>Accueil</button>
+        <button class="nav-btn" data-section="checklists"><span class="dot"></span>Checklists</button>
+        <button class="nav-btn" data-section="planning"><span class="dot"></span>Planning Préventif</button>
+        <button class="nav-btn" data-section="logigramme"><span class="dot"></span>Logigramme</button>
+        <button class="nav-btn" data-section="suivi"><span class="dot"></span>Suivi Journalier</button>
+
+        <button class="nav-btn" data-section="equipements"><span class="dot"></span>Fiches Techniques</button>
+      </nav>
+    </header>
+
+    <main class="content-card" role="main">
+      <div class="content-inner">
+
+        <section id="section-home" class="app-section active section-frame" aria-label="Accueil">
+          <div class="section-header">
+            <div>
+              <div class="section-pill">Vue Synthétique</div>
+              <div class="section-title">Console de Maintenance & Exploitation</div>
+            </div>
+            <div class="section-badge">Interface Monofichier</div>
+          </div>
+
+          <div class="grid grid-2">
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Accès Terrain</div>
+                  <div class="card-sub">Checklists & Relevés (Microsoft Forms)</div>
+                </div>
+                <span class="chip accent">Opérations</span>
+              </div>
+
+              <div style="display:flex;flex-wrap:wrap;gap:0.6rem;">
+                <button class="btn btn-primary" data-icon="📝" data-open-checklist-modal>Checklists N1 / N2</button>
+                <button class="btn" data-icon="📅" data-nav-target="planning">Planning Préventif</button>
+                <button class="btn" data-icon="📂" data-nav-target="equipements">Fiches Équipements</button>
+              </div>
+
+              <p style="margin-top:0.8rem;font-size:0.8rem;color:var(--text-muted);font-weight:600;">
+                Utilisation de formulaires standardisés pour la saisie des données terrain (disponibilité, MTBF, MTTR).
+              </p>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Pilotage & Reporting</div>
+                  <div class="card-sub">Synthèse des indicateurs clés</div>
+                </div>
+                <span class="chip">KPI</span>
+              </div>
+
+              <ul style="list-style:none;display:flex;flex-direction:column;gap:0.4rem;font-size:0.85rem;color:var(--text-soft);font-weight:600;">
+                <li>• Planning préventif structuré par fréquence (Quotidien à Annuel).</li>
+                <li>• Filtres dynamiques (Mois / Équipement / Niveau) et recherche intégrée.</li>
+                <li>• Export CSV pour analyse approfondie (Excel / Power BI).</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section id="section-checklists" class="app-section section-frame" aria-label="Checklists">
+          <div class="section-header">
+            <div>
+              <div class="section-pill">Standardisation Terrain</div>
+              <div class="section-title">Accès aux Checklists Opérationnelles</div>
+            </div>
+            <div class="section-badge">Lien externe Forms</div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Sélection du Formulaire</div>
+                <div class="card-sub">Maintenance N1 (Opérateur), N2 (Technicien) ou Suivi d'Exploitation</div>
+              </div>
+              <button class="btn btn-primary" data-icon="☑️" data-open-checklist-modal>Ouvrir la sélection</button>
+            </div>
+
+            <p style="font-size:0.85rem;color:var(--text-muted);font-weight:600;">
+              Veuillez sélectionner le niveau de maintenance ou le type de suivi à effectuer. Les données sont enregistrées via Microsoft Forms.
+            </p>
+          </div>
+        </section>
+
+        <section id="section-planning" class="app-section section-frame" aria-label="Planning annuel">
+          <div class="section-header">
+            <div>
+              <div class="section-pill">Planification</div>
+              <div class="section-title">Planning Annuel de Maintenance Préventive</div>
+            </div>
+            <div class="section-badge">Filtres & Export</div>
+          </div>
+
+          <div class="card" id="planning-card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Filtrage des Tâches</div>
+                <div class="card-sub">Mois • Équipement • Niveau • Recherche</div>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:flex-end;">
+                <button class="btn btn-ghost" data-icon="↺" id="planning-reset-filters">Réinitialiser</button>
+                <button class="btn btn-primary" data-icon="⬇️" id="planning-export-csv">Exporter CSV</button>
+              </div>
+            </div>
+
+            <div class="filters-row">
+              <div class="field">
+                <label for="planning-month">Mois</label>
+                <select id="planning-month">
+                  <option value="">Tous</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="planning-equipment">Équipement</label>
+                <select id="planning-equipment">
+                  <option value="">Tous</option>
+                  <option value="Photon Mono X 6K">Photon Mono X 6K</option>
+                  <option value="Station Wash">Station Wash</option>
+                  <option value="Station Cure">Station Cure</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="planning-level">Niveau</label>
+                <select id="planning-level">
+                  <option value="">Tous</option>
+                  <option value="N1">N1 (Opérateur)</option>
+                  <option value="N2">N2 (Technicien)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="planning-search">Recherche</label>
+                <input type="text" id="planning-search" placeholder="Tâche, sous-système..." />
+              </div>
+            </div>
+
+            <div class="table-wrapper">
+              <table id="planning-table">
+                <thead>
+                  <tr>
+                    <th>Mois</th>
+                    <th>Niveau</th>
+                    <th>Équipement</th>
+                    <th>Sous-système</th>
+                    <th>Opération</th>
+                    <th>Fréquence</th>
+                    <th>Temps (min)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Les lignes seront insérées ici par JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="section-logigramme" class="app-section section-frame kpi" aria-label="Logigramme">
+          <div class="section-header">
+            <div>
+              <div class="section-pill">Processus</div>
+              <div class="section-title">Logigramme de Gestion des Incidents</div>
+            </div>
+            <div class="section-badge">Procédure Standard</div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Visualisation du Processus</div>
+                <div class="card-sub">Flux de travail pour la maintenance corrective</div>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:flex-end;">
+                <button class="btn" data-icon="🖼️" onclick="window.open('https://insalyonfrance-my.sharepoint.com/:b:/g/personal/oaitbrahim_insa-lyon_fr/IQAH9Yz3tSCHSbP0yzfE3tuUAbxBAYyPXt_I9uVPh17Hxb0?e=grJ4VC', '_blank', 'noopener')">Niveau 1</button>
+                <button class="btn btn-primary" data-icon="🖼️" onclick="window.open('https://insalyonfrance-my.sharepoint.com/:b:/g/personal/oaitbrahim_insa-lyon_fr/IQD2wviLXI7DTYbz8viKIGDMAfYhPk1tsMR_BrIfHricgq0?e=XeLRNL', '_blank', 'noopener')">Niveau 2</button>
+              </div>
+            </div>
+
+            <p style="font-size:0.85rem;color:var(--text-muted);font-weight:600;">
+              Le logigramme détaille les étapes à suivre en cas de panne ou d'anomalie, de la détection à la résolution.
+            </p>
+          </div>
+        </section>
+
+        <section id="section-suivi" class="app-section section-frame alert" aria-label="Suivi journalier">
+          <div class="section-header">
+            <div>
+              <div class="section-pill">Exploitation</div>
+              <div class="section-title">Suivi Journalier des Heures de Fonctionnement</div>
+            </div>
+            <div class="section-badge">Calcul MTBF/MTTR</div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Saisie des Relevés</div>
+                <div class="card-sub">Heures de marche, d'arrêt et incidents</div>
+              </div>
+              <button class="btn btn-primary" data-icon="⏱️" id="suivi-open-daily">Accéder au formulaire</button>
+            </div>
+
+            <p style="font-size:0.85rem;color:var(--text-muted);font-weight:600;">
+              La saisie quotidienne des heures de fonctionnement est essentielle pour le calcul des indicateurs de fiabilité (MTBF, MTTR) et de disponibilité.
+            </p>
+          </div>
+        </section>
+
+
+
+        <section id="section-equipements" class="app-section section-frame" aria-label="Fiches techniques">
+          <div class="section-header">
+            <div>
+              <div class="section-pill">Documentation</div>
+              <div class="section-title">Fiches Techniques des Équipements</div>
+            </div>
+            <div class="section-badge">Détails & Manuels</div>
+          </div>
+
+          <div id="equip-list-view" class="grid grid-2">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Photon Mono X 6K</div>
+                <button class="btn btn-icon-only" data-icon="➡️" data-open-equip="Photon Mono X 6K" aria-label="Voir détails"></button>
+              </div>
+              <div class="card-sub">Imprimante résine Anycubic 6K</div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Station Wash</div>
+                <button class="btn btn-icon-only" data-icon="➡️" data-open-equip="Station Wash" aria-label="Voir détails"></button>
+              </div>
+              <div class="card-sub">Station de lavage post-traitement</div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Station Cure</div>
+                <button class="btn btn-icon-only" data-icon="➡️" data-open-equip="Station Cure" aria-label="Voir détails"></button>
+              </div>
+              <div class="card-sub">Station de polymérisation UV</div>
+            </div>
+          </div>
+
+          <div id="equip-detail-container" class="grid" style="display:none;">
+            <div class="card">
+              <div class="card-header">
+                <button class="btn btn-ghost" data-icon="⬅️" id="equip-detail-back">Retour</button>
+                <div class="card-title" id="equip-detail-name"></div>
+                <div style="display:flex;gap:0.5rem;">
+                  <button class="btn btn-primary" data-icon="📄" id="equip-detail-open-pdf">Manuel PDF</button>
+                  <button class="btn" data-icon="📅" id="equip-detail-open-planning">Voir Planning</button>
+                </div>
+              </div>
+              <div class="card-sub" id="equip-detail-sub" style="margin-bottom:0.75rem;"></div>
+              <div id="equip-detail-tags" style="display:flex;flex-wrap:wrap;gap:0.5rem;"></div>
+
+              <div style="margin-top:1rem;font-size:0.85rem;color:var(--text-soft);">
+                <p>Cette fiche fournit un accès rapide à la documentation essentielle et aux tâches de maintenance associées à cet équipement.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+    <div class="site-footer">
+      <div class="site-footer-inner">
+        <div class="footer-left">
+          <span class="footer-dot"></span>
+          <span>Mini-GMAO v1.1 - Optimisé pour mobile</span>
+        </div>
+        <div class="footer-right">
+          <span>Développé par Manus AI</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Checklists -->
+  <div id="checklist-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-panel" tabindex="-1">
+      <div class="modal-title" id="modal-title">Sélectionner le Formulaire</div>
+      <div class="modal-sub">Choisissez le type de checklist à remplir. Les liens ouvrent Microsoft Forms dans un nouvel onglet.</div>
+
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="btn-checklist-n1" data-icon="👷">Checklist N1 (Opérateur)</button>
+        <button class="btn btn-primary" id="btn-checklist-n2" data-icon="🛠️">Checklist N2 (Technicien)</button>
+        <button class="btn" id="btn-checklist-daily" data-icon="⏱️">Suivi Journalier (Heures)</button>
+      </div>
+
+      <div class="modal-footer">
+        <span>Appuyez sur <kbd>ESC</kbd> pour fermer</span>
+        <button class="btn btn-ghost btn-icon-only" id="checklist-modal-close" aria-label="Fermer la modale">✖️</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // URL de démonstration (à remplacer par les liens réels)
+    const FORMS_N1_URL = "https://forms.office.com/e/6MTDGLZzWU";
+    const FORMS_N2_URL = "https://forms.office.com/e/vA0k7VFX45";
+    const FORMS_DAILY_URL = "https://forms.office.com/e/Tx0VrxtTB6";
+    const LOGIGRAMME_URL = "https://insalyonfrance-my.sharepoint.com/:b:/g/personal/oaitbrahim_insa-lyon_fr/IQD2wviLXI7DTYbz8viKIGDMAfYhPk1tsMR_BrIfHricgq0?e=XeLRNL";
+    const DASHBOARD_POWERBI_URL = "https://app.powerbi.com/groups/me/reports/Anycubic_KPI";
+    const DASHBOARD_EXCEL_URL = "https://onedrive.live.com/view?resid=Anycubic_Data.xlsx";
+    const EQUIP_PDF_URLS = {
+      "Photon Mono X 6K": "https://insalyonfrance-my.sharepoint.com/:b:/g/personal/oaitbrahim_insa-lyon_fr/IQAfkOyq6OSbRrwtvJlzQ4h3ATGRdK6668t3jUhHjQuJUGg?e=l9cfuz",
+      "Station Wash": "https://insalyonfrance-my.sharepoint.com/:b:/g/personal/oaitbrahim_insa-lyon_fr/IQDiILQldF-oSJetAJkCkn-zAdX2_i0Sd2Yu2NYBkeXEXHM?e=YwfZis",
+      "Station Cure": "https://insalyonfrance-my.sharepoint.com/:b:/g/personal/oaitbrahim_insa-lyon_fr/IQDiILQldF-oSJetAJkCkn-zAdX2_i0Sd2Yu2NYBkeXEXHM?e=YwfZis"
+    };
+
+    // ====== Navigation sections ======
+    const sections = {
+      home: document.getElementById("section-home"),
+      checklists: document.getElementById("section-checklists"),
+      planning: document.getElementById("section-planning"),
+      logigramme: document.getElementById("section-logigramme"),
+      suivi: document.getElementById("section-suivi"),
+
+      equipements: document.getElementById("section-equipements")
+    };
+
+    function setActiveSection(key){
+      Object.keys(sections).forEach(k=>{
+        sections[k].classList.toggle("active",k===key);
+      });
+      document.querySelectorAll(".nav-btn").forEach(btn=>{
+        btn.classList.toggle("active",btn.dataset.section===key);
+      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    document.querySelectorAll(".nav-btn").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const target = btn.dataset.section;
+        if(target==="checklists"){
+          setActiveSection("checklists");
+          openChecklistModal();
+        } else {
+          setActiveSection(target);
+        }
+      });
+    });
+
+    document.querySelectorAll("[data-nav-target]").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const target = btn.dataset.navTarget;
+        setActiveSection(target);
+      });
+    });
+
+    // ====== Modal Checklists ======
+    const checklistModal = document.getElementById("checklist-modal");
+    const modalPanel = checklistModal.querySelector(".modal-panel");
+
+    function openChecklistModal(){
+      checklistModal.classList.add("active");
+      checklistModal.dataset.open="true";
+      modalPanel.setAttribute("tabindex","-1");
+      modalPanel.focus();
+    }
+    function closeChecklistModal(){
+      checklistModal.classList.remove("active");
+      delete checklistModal.dataset.open;
+    }
+
+    document.querySelectorAll("[data-open-checklist-modal]").forEach(el=>{
+      el.addEventListener("click",openChecklistModal);
+    });
+    document.getElementById("checklist-modal-close").addEventListener("click",closeChecklistModal);
+    checklistModal.addEventListener("click",e=>{
+      if(e.target===checklistModal){closeChecklistModal();}
+    });
+    document.addEventListener("keydown",e=>{
+      if(e.key==="Escape" && checklistModal.dataset.open==="true"){closeChecklistModal();}
+    });
+
+    document.getElementById("btn-checklist-n1").addEventListener("click",()=>window.open(FORMS_N1_URL,"_blank","noopener"));
+    document.getElementById("btn-checklist-n2").addEventListener("click",()=>window.open(FORMS_N2_URL,"_blank","noopener"));
+    document.getElementById("btn-checklist-daily").addEventListener("click",()=>window.open(FORMS_DAILY_URL,"_blank","noopener"));
+
+    // ====== Boutons liens ======
+    document.getElementById("suivi-open-daily").addEventListener("click",()=>window.open(FORMS_DAILY_URL,"_blank","noopener"));
+
+
+
+    // ====== Fiches équipements (vue détail) ======
+    const equipListView = document.getElementById("equip-list-view");
+    const equipDetailContainer = document.getElementById("equip-detail-container");
+    const equipDetailName = document.getElementById("equip-detail-name");
+    const equipDetailSub = document.getElementById("equip-detail-sub");
+    const equipDetailTags = document.getElementById("equip-detail-tags");
+    const equipDetailBack = document.getElementById("equip-detail-back");
+    const equipDetailOpenPdf = document.getElementById("equip-detail-open-pdf");
+    const equipDetailOpenPlanning = document.getElementById("equip-detail-open-planning");
+
+    const EQUIP_META = {
+      "Photon Mono X 6K": { sub:"Imprimante résine Anycubic 6K", tags:["Préventif N1/N2","Axe Z / UV / LCD"] },
+      "Station Wash": { sub:"Station de lavage post-traitement", tags:["Cuve / panier","Contrôles moteur"] },
+      "Station Cure": { sub:"Station de polymérisation UV", tags:["Sécurité capot","Plateau rotatif"] }
+    };
+
+    let currentEquip = null;
+
+    function openEquipDetail(name){
+      currentEquip = name;
+      equipDetailName.textContent = name;
+      const meta = EQUIP_META[name] || {sub:"",tags:[]};
+      equipDetailSub.textContent = meta.sub;
+      equipDetailTags.innerHTML = "";
+      meta.tags.forEach(t=>{
+        const span=document.createElement("span");
+        span.className="chip accent"; /* Utilisation de accent pour les tags */
+        span.textContent=t;
+        equipDetailTags.appendChild(span);
+      });
+      equipListView.style.display="none";
+      equipDetailContainer.style.display="grid"; /* Affichage en grid pour le détail */
+      equipDetailContainer.classList.add("active");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    function closeEquipDetail(){
+      currentEquip=null;
+      equipListView.style.display="grid"; /* Affichage en grid pour la liste */
+      equipDetailContainer.style.display="none";
+      equipDetailContainer.classList.remove("active");
+    }
+
+    document.querySelectorAll("[data-open-equip]").forEach(btn=>{
+      btn.addEventListener("click",()=>openEquipDetail(btn.dataset.openEquip));
+    });
+    equipDetailBack.addEventListener("click",closeEquipDetail);
+
+    equipDetailOpenPdf.addEventListener("click",()=>{
+      if(!currentEquip) return;
+      const url = EQUIP_PDF_URLS[currentEquip];
+      if(url){ window.open(url,"_blank","noopener"); }
+    });
+    equipDetailOpenPlanning.addEventListener("click",()=>{
+      if(!currentEquip) return;
+      setActiveSection("planning");
+      document.getElementById("planning-equipment").value=currentEquip;
+      applyPlanningFilters();
+    });
+    document.querySelectorAll("[data-focus-planning-equipment]").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const equip=btn.dataset.focusPlanningEquipment;
+        setActiveSection("planning");
+        document.getElementById("planning-equipment").value=equip;
+        applyPlanningFilters();
+      });
+    });
+
+    // ====== Données planning (inchangées) ======
+    const BASE_TASKS = [
+      { niveau:"N1", equipement:"Photon Mono X 6K", sousSysteme:"Bac FEP", tache:"Nettoyer le bac FEP", frequence:"Quotidien", temps:5 },
+      { niveau:"N1", equipement:"Photon Mono X 6K", sousSysteme:"Plateau", tache:"Nettoyer le plateau d’impression", frequence:"Quotidien", temps:3 },
+      { niveau:"N1", equipement:"Photon Mono X 6K", sousSysteme:"Axe Z (vis sans fin)", tache:"Contrôle auditif de l’axe Z", frequence:"Hebdo", temps:2 },
+      { niveau:"N1", equipement:"Photon Mono X 6K", sousSysteme:"Axe Z", tache:"Lubrification légère", frequence:"Mensuel", temps:5 },
+      { niveau:"N1", equipement:"Station Wash", sousSysteme:"Cuve de lavage", tache:"Nettoyer la cuve + panier", frequence:"Après usage", temps:5 },
+      { niveau:"N2", equipement:"Photon Mono X 6K", sousSysteme:"Écran LCD + UV", tache:"Contrôle homogénéité UV / pixels", frequence:"Trimestriel", temps:10 },
+      { niveau:"N2", equipement:"Station Wash", sousSysteme:"Engrenage / joint cuve", tache:"Inspection engrenage + joint", frequence:"Semestriel", temps:15 },
+      { niveau:"N2", equipement:"Station Cure", sousSysteme:"Lampes UV", tache:"Tester intensité UV", frequence:"Semestriel", temps:7 }
+    ];
+
+    const MONTHS = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+
+    function monthsForFrequency(freq){
+      switch(freq){
+        case "Mensuel": return MONTHS.slice();
+        case "Trimestriel": return ["Mars","Juin","Septembre","Décembre"];
+        case "Semestriel": return ["Juin","Décembre"];
+        case "Annuel": return ["Décembre"];
+        default: return MONTHS.slice();
+      }
+    }
+    function displayFrequency(freq){
+      switch(freq){
+        case "Hebdo":
+        case "Quotidien":
+        case "Après usage": return "Récurrent – " + freq;
+        case "Correctif": return "À la demande";
+        default: return freq;
+      }
+    }
+
+    const PLANNING_ROWS = [];
+    BASE_TASKS.forEach(task=>{
+      const months = monthsForFrequency(task.frequence);
+      months.forEach(m=>{
+        PLANNING_ROWS.push({
+          mois: task.frequence==="Correctif" ? "Tous mois (correctif)" : m,
+          niveau: task.niveau,
+          equipement: task.equipement,
+          sousSysteme: task.sousSysteme,
+          tache: task.tache,
+          frequenceAffichee: displayFrequency(task.frequence),
+          temps: task.temps
+        });
+      });
+    });
+
+    // ====== Planning UI ======
+    const planningTableBody = document.querySelector("#planning-table tbody");
+    const planningTable = document.getElementById("planning-table");
+    const planningMonthSelect = document.getElementById("planning-month");
+    const planningEquipmentSelect = document.getElementById("planning-equipment");
+    const planningLevelSelect = document.getElementById("planning-level");
+    const planningSearchInput = document.getElementById("planning-search");
+
+    function initPlanningMonthOptions(){
+      const uniqueMonths = [...new Set(PLANNING_ROWS.map(r=>r.mois))];
+      uniqueMonths.forEach(m=>{
+        const opt=document.createElement("option");
+        opt.value=m; opt.textContent=m;
+        planningMonthSelect.appendChild(opt);
+      });
+    }
+
+    function renderPlanningRows(rows){
+      planningTableBody.innerHTML="";
+      rows.forEach(row=>{
+        const tr=document.createElement("tr");
+        const levelClass = row.niveau === "N1" ? "level-n1" : "level-n2";
+
+        tr.innerHTML=`
+          <td data-label="Mois">${row.mois}</td>
+          <td data-label="Niveau" class="${levelClass}">${row.niveau}</td>
+          <td data-label="Équipement">${row.equipement}</td>
+          <td data-label="Sous-système">${row.sousSysteme}</td>
+          <td data-label="Opération">${row.tache}</td>
+          <td data-label="Fréquence">${row.frequenceAffichee}</td>
+          <td data-label="Temps (min)">${row.temps}</td>
+        `;
+        planningTableBody.appendChild(tr);
+      });
+    }
+
+    function applyPlanningFilters(){
+      const month = planningMonthSelect.value;
+      const equip = planningEquipmentSelect.value;
+      const level = planningLevelSelect.value;
+      const search = planningSearchInput.value.trim().toLowerCase();
+
+      const filtered = PLANNING_ROWS.filter(row=>{
+        if(month && row.mois!==month) return false;
+        if(equip && row.equipement!==equip) return false;
+        if(level && row.niveau!==level) return false;
+        if(search){
+          const hay = (row.tache+" "+row.sousSysteme).toLowerCase();
+          if(!hay.includes(search)) return false;
+        }
+        return true;
+      });
+      renderPlanningRows(filtered);
+    }
+
+    document.getElementById("planning-reset-filters").addEventListener("click",()=>{
+      planningMonthSelect.value="";
+      planningEquipmentSelect.value="";
+      planningLevelSelect.value="";
+      planningSearchInput.value="";
+      applyPlanningFilters();
+    });
+    planningMonthSelect.addEventListener("change",applyPlanningFilters);
+    planningEquipmentSelect.addEventListener("change",applyPlanningFilters);
+    planningLevelSelect.addEventListener("change",applyPlanningFilters);
+    planningSearchInput.addEventListener("input",applyPlanningFilters);
+
+    function exportTableToCSV(table,filename){
+      const rows = Array.from(table.querySelectorAll("tr"));
+      const lines = rows.map(row=>{
+        const cells = Array.from(row.querySelectorAll("th,td")).map(cell=>{
+          let text = cell.textContent.trim().replace(/"/g,'""');
+          if(/[",;\n]/.test(text)){ text='"'+text+'"'; }
+          return text;
+        });
+        return cells.join(";");
+      });
+      const csv = lines.join("\n");
+      const blob = new Blob([csv],{type:"text/csv;charset=utf-8;"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href=url; a.download=filename;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+    document.getElementById("planning-export-csv").addEventListener("click",()=>{
+      // Récupère les données filtrées pour l'export
+      const headers = Array.from(planningTable.querySelectorAll("th")).map(th => th.textContent.trim());
+      const filteredRows = PLANNING_ROWS.filter(row => {
+        const month = planningMonthSelect.value;
+        const equip = planningEquipmentSelect.value;
+        const level = planningLevelSelect.value;
+        const search = planningSearchInput.value.trim().toLowerCase();
+
+        if(month && row.mois!==month) return false;
+        if(equip && row.equipement!==equip) return false;
+        if(level && row.niveau!==level) return false;
+        if(search){
+          const hay = (row.tache+" "+row.sousSysteme).toLowerCase();
+          if(!hay.includes(search)) return false;
+        }
+        return true;
+      });
+
+      let csvContent = headers.join(";") + "\n";
+      filteredRows.forEach(row => {
+        const values = [
+          row.mois,
+          row.niveau,
+          row.equipement,
+          row.sousSysteme,
+          row.tache,
+          row.frequenceAffichee,
+          row.temps
+        ].map(val => {
+          let text = String(val).trim().replace(/"/g,'""');
+          if(/[",;\n]/.test(text)){ text='"'+text+'"'; }
+          return text;
+        });
+        csvContent += values.join(";") + "\n";
+      });
+
+      const blob = new Blob([csvContent],{type:"text/csv;charset=utf-8;"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href=url; a.download=filename;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // init
+    initPlanningMonthOptions();
+    applyPlanningFilters();
+  </script>
+</body>
+</html>
